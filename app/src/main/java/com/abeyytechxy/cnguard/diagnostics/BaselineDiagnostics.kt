@@ -54,10 +54,15 @@ object BaselineDiagnostics {
         label: String
     ): DiagnosticItem {
         val installed = try {
-            context.packageManager.getPackageInfo(
-                packageName,
-                PackageManager.PackageInfoFlags.of(0)
-            )
+            @Suppress("DEPRECATION")
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                context.packageManager.getPackageInfo(
+                    packageName,
+                    PackageManager.PackageInfoFlags.of(0)
+                )
+            } else {
+                context.packageManager.getPackageInfo(packageName, 0)
+            }
             true
         } catch (_: PackageManager.NameNotFoundException) {
             false
