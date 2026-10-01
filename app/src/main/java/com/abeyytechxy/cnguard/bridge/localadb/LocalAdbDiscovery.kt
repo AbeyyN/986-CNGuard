@@ -10,8 +10,8 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 class LocalAdbDiscovery(context: Context) {
     companion object {
-        private const val PAIRING_SERVICE_TYPE = "_adb-tls-pairing._tcp."
-        private const val CONNECT_SERVICE_TYPE = "_adb-tls-connect._tcp."
+        private const val PAIRING_SERVICE_TYPE = "_adb-tls-pairing._tcp"
+        private const val CONNECT_SERVICE_TYPE = "_adb-tls-connect._tcp"
         private const val DEFAULT_TIMEOUT_MS = 5_000L
     }
 
@@ -19,6 +19,7 @@ class LocalAdbDiscovery(context: Context) {
     private val nsdManager = appContext.getSystemService(NsdManager::class.java)
     private val wifiManager = appContext.getSystemService(WifiManager::class.java)
     private val handler = Handler(Looper.getMainLooper())
+    private val finishRunnable = Runnable { finishDiscovery() }
 
     private val active = AtomicBoolean(false)
     private val listeners = mutableListOf<NsdManager.DiscoveryListener>()
@@ -59,7 +60,7 @@ class LocalAdbDiscovery(context: Context) {
             kind = AdbServiceKind.CONNECT
         )
 
-        handler.postDelayed(::finishDiscovery, timeoutMs.coerceAtLeast(1_000L))
+        handler.postDelayed(finishRunnable, timeoutMs.coerceAtLeast(1_000L))
     }
 
     fun close() {
@@ -136,7 +137,7 @@ class LocalAdbDiscovery(context: Context) {
             return
         }
 
-        handler.removeCallbacks(::finishDiscovery)
+        handler.removeCallbacks(finishRunnable)
 
         listeners.toList().forEach(::stopListener)
         listeners.clear()
