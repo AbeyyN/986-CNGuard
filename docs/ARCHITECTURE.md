@@ -35,14 +35,17 @@ Adapters must tolerate missing services, renamed internals, changed AppOps, and 
 
 ### Privilege bridges
 
-Higher-privilege operations are optional.
+Higher-privilege operations are optional and ordered by user friction:
 
-Planned bridges:
+1. Local Bridge
+2. Shizuku
+3. root
 
-- Shizuku
-- root providers such as KernelSU, Magisk, or APatch
+Local Bridge is the primary advanced path. It uses a built-in Wireless ADB client so users do not need Termux or Shizuku for supported shell-level actions. Shizuku and root remain fallback adapters for capabilities that cannot be delivered safely through Local Bridge.
 
-The application must remain useful without either bridge. Privilege acquisition is never part of ordinary startup.
+The application must remain useful without any privilege bridge. Privilege acquisition is never part of ordinary startup.
+
+See [LOCAL_BRIDGE.md](LOCAL_BRIDGE.md).
 
 ### Diagnostic model
 
@@ -70,6 +73,8 @@ detect -> preflight -> snapshot -> apply -> verify
 ```
 
 This separation prevents a read-only scan from modifying the device.
+
+Privileged repair actions are typed and allowlisted. The application does not expose an arbitrary command terminal, and remote rule packs cannot inject shell text.
 
 ## Compatibility strategy
 
