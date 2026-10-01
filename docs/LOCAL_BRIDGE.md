@@ -41,8 +41,8 @@ A banking-sensitive user should not need to leave Wireless debugging enabled dur
 
 Android Wireless ADB advertises two relevant mDNS service types:
 
-- `_adb-tls-pairing._tcp.`
-- `_adb-tls-connect._tcp.`
+- `_adb-tls-pairing._tcp`
+- `_adb-tls-connect._tcp`
 
 The bootstrap implementation uses Android Network Service Discovery to detect those services. It does not pair, authenticate, or execute shell operations yet.
 
