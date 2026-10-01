@@ -4,7 +4,7 @@ plugins {
 
 android {
     namespace = "com.abeyytechxy.cnguard"
-    compileSdk = 37
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.abeyytechxy.cnguard"
