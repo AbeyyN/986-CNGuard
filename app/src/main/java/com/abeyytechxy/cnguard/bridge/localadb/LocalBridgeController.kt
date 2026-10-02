@@ -8,11 +8,32 @@ class LocalBridgeController(
     private val activity: Activity
 ) {
     private val discovery = LocalAdbDiscovery(activity)
+    private val transport = LocalBridgeTransport(activity)
 
-    fun discover(
-        callback: (LocalBridgeSnapshot) -> Unit
-    ) {
+    fun discover(callback: (LocalBridgeSnapshot) -> Unit) {
         discovery.discover(callback = callback)
+    }
+
+    fun pair(
+        service: LocalAdbService?,
+        pairingCode: String,
+        callback: (LocalBridgeResult) -> Unit
+    ) {
+        transport.pair(service, pairingCode, callback)
+    }
+
+    fun testConnection(
+        service: LocalAdbService?,
+        callback: (LocalBridgeResult) -> Unit
+    ) {
+        transport.testConnection(service, callback)
+    }
+
+    fun runReadOnlyDiagnostics(
+        service: LocalAdbService?,
+        callback: (List<LocalBridgeDiagnostic>) -> Unit
+    ) {
+        transport.runReadOnlyDiagnostics(service, callback)
     }
 
     fun openDeveloperOptions() {
@@ -30,5 +51,6 @@ class LocalBridgeController(
 
     fun close() {
         discovery.close()
+        transport.close()
     }
 }

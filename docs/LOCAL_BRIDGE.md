@@ -1,6 +1,6 @@
 # Local Bridge
 
-Local Bridge is the primary advanced diagnostics path for 986 CN Guard. It is designed to provide optional Wireless ADB capabilities without requiring Termux or Shizuku as a runtime dependency.
+Local Bridge is the primary advanced diagnostics path for 986 CN Guard. It provides optional Wireless ADB capabilities without requiring Termux or Shizuku as a runtime dependency.
 
 ## Product model
 
@@ -8,68 +8,75 @@ The application has four capability levels:
 
 1. **Standard** — diagnostics and guided fixes using normal Android APIs.
 2. **Enhanced** — user-granted Android special access for deeper diagnostics.
-3. **Local Bridge** — a built-in Wireless ADB client for bounded advanced diagnostic sessions.
+3. **Local Bridge** — built-in Wireless ADB pairing and bounded diagnostic sessions.
 4. **Expert** — optional Shizuku or root adapters for capabilities that cannot be provided safely by the preceding levels.
 
 Shizuku is not required for normal use.
 
 ## Local Bridge lifecycle
 
-The intended lifecycle is:
-
 ```text
 open Developer Options
         |
 enable Wireless debugging
         |
-pair CN Guard once
+open "Pair device with pairing code"
         |
-discover the trusted ADB service
+CN Guard discovers the local pairing endpoint
         |
-run a predefined diagnostic probe
+enter the 6-digit code
         |
-record and verify the result
+CN Guard stores its ADB host identity in app-private storage
         |
-stop the bridge session
+discover the trusted connect endpoint
         |
-user may disable Wireless debugging again
+run predefined read-only diagnostics
+        |
+end the session
+        |
+Wireless debugging may be disabled again
 ```
 
-A banking-sensitive user should not need to leave Wireless debugging enabled during normal daily use.
+The design does not require Wireless debugging to remain enabled during normal daily use.
 
-## Discovery
+## Discovery boundary
 
-Android Wireless ADB advertises two relevant mDNS service types:
+Android Wireless ADB advertises:
 
 - `_adb-tls-pairing._tcp`
 - `_adb-tls-connect._tcp`
 
-The bootstrap implementation uses Android Network Service Discovery to detect those services. It does not pair, authenticate, or execute shell operations yet.
+CN Guard resolves those services through Android NSD and accepts only endpoints whose resolved IP belongs to a network interface on the current phone. This prevents the local bridge flow from silently selecting a different Android device advertising ADB on the same LAN.
+
+## Pairing transport
+
+The transport adapter uses Kadb for the ADB wire protocol and pairing flow. CN Guard persists only its private ADB host identity in the app's private files directory. Pairing codes are not persisted.
+
+The APK currently uses Kadb 2.1.4. Its Android pairing path includes a GPL-3.0 SPAKE2 dependency, so release licensing must remain GPL-compatible.
+
+Bouncy Castle is explicitly pinned above the vulnerable 1.84 version declared by Kadb 2.1.4.
 
 ## Security boundary
 
 Local Bridge is not a general-purpose terminal.
 
-Privileged capabilities are represented by predefined typed operations. Arbitrary command strings from UI input, remote rule packs, network responses, or downloaded configuration are not accepted.
+There is no UI field for arbitrary shell commands. Shell operations are fixed inside typed application features. Remote rule packs, downloaded configuration, and network responses cannot supply shell command strings.
 
-The first bootstrap exposes diagnostic probe identifiers only. State-changing operations remain out of scope until pairing, transport, physical-device behavior, verification, and rollback semantics have been validated.
+Current Local Bridge shell access is read-only:
 
-## Initial diagnostic probes
+- a fixed connection echo;
+- Greezer service visibility;
+- Google Play services UID lookup;
+- read-only TCP socket-table inspection for FCM ports 5228–5230.
 
-The initial catalog reserves typed identifiers for:
+State-changing repair commands remain out of scope until physical-device verification and rollback behavior are established.
 
-- reading the Greezer state relevant to Google Play services;
-- reading FCM connection state;
-- reading Xiaomi Autostart state.
+## Verification states
 
-The current bootstrap does not execute those probes yet. Availability remains capability-driven.
+Build success does not prove physical Wireless ADB behavior.
 
-## Pairing and transport
-
-Pairing and ADB TLS transport are separate from discovery and are not considered implemented until they pass physical-device verification.
-
-The project will not copy a third-party terminal application into the codebase. External implementation details must be reviewed for licensing and provenance before code is adopted.
+A release can only claim pairing or Xiaomi ROM support after testing on the exact device/ROM family and recording it in `SUPPORT_MATRIX.md`.
 
 ## Future Android local-network changes
 
-Local-network access is becoming more explicitly permissioned on newer Android releases. Local Bridge must adapt to the platform's user-approved service discovery model where required rather than assuming unrestricted LAN access indefinitely.
+Local-network access is becoming more explicitly permissioned on newer Android releases. Local Bridge must adapt to the platform's user-approved discovery model as target SDK levels advance.

@@ -4,14 +4,18 @@ plugins {
 
 android {
     namespace = "com.abeyytechxy.cnguard"
-    compileSdk = 36
+    compileSdk {
+        version = release(37) {
+            minorApiLevel = 2
+        }
+    }
 
     defaultConfig {
         applicationId = "com.abeyytechxy.cnguard"
         minSdk = 31
         targetSdk = 36
-        versionCode = 1
-        versionName = "0.1.0-alpha01"
+        versionCode = 2
+        versionName = "0.2.0-alpha01"
     }
 
     compileOptions {
@@ -24,7 +28,24 @@ android {
             isMinifyEnabled = false
         }
     }
+
+    packaging {
+        resources {
+            pickFirsts += setOf(
+                "META-INF/LICENSE.md",
+                "META-INF/NOTICE.md"
+            )
+        }
+    }
 }
 
 dependencies {
+    implementation("com.flyfishxu:kadb-android:2.1.4")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.11.0")
+
+    // Kadb 2.1.4 declares Bouncy Castle 1.84. Pin a patched release.
+    implementation("org.bouncycastle:bcprov-jdk18on:1.86")
+    implementation("org.bouncycastle:bcpkix-jdk18on:1.86")
+
+    testImplementation("junit:junit:4.13.2")
 }
