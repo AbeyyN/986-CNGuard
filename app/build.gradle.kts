@@ -4,7 +4,11 @@ plugins {
 
 android {
     namespace = "com.abeyytechxy.cnguard"
-    compileSdk = 36
+    compileSdk {
+        version = release(37) {
+            minorApiLevel = 2
+        }
+    }
 
     defaultConfig {
         applicationId = "com.abeyytechxy.cnguard"
