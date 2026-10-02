@@ -17,9 +17,15 @@ import com.abeyytechxy.cnguard.bridge.localadb.LocalBridgeSnapshot
 import com.abeyytechxy.cnguard.bridge.localadb.LocalBridgeState
 import com.abeyytechxy.cnguard.diagnostics.BaselineDiagnostics
 import com.abeyytechxy.cnguard.diagnostics.DiagnosticState
+import com.abeyytechxy.cnguard.notification.NotificationDoctorAccess
+import com.abeyytechxy.cnguard.notification.NotificationEventStore
+import com.abeyytechxy.cnguard.notification.NotificationPresentationClassifier
+import com.abeyytechxy.cnguard.notification.PresentationState
 
 class MainActivity : Activity() {
     private lateinit var localBridgeController: LocalBridgeController
+    private lateinit var notificationDoctorAccess: NotificationDoctorAccess
+
     private lateinit var localBridgeStatus: TextView
     private lateinit var scanBridgeButton: Button
     private lateinit var pairButton: Button
@@ -27,12 +33,16 @@ class MainActivity : Activity() {
     private lateinit var diagnosticsButton: Button
     private lateinit var pairingCodeInput: EditText
 
+    private lateinit var notificationDoctorStatus: TextView
+    private lateinit var recentNotificationsStatus: TextView
+
     private var bridgeSnapshot = LocalBridgeSnapshot(LocalBridgeState.IDLE)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         localBridgeController = LocalBridgeController(this)
+        notificationDoctorAccess = NotificationDoctorAccess(this)
 
         val density = resources.displayMetrics.density
         val padding = (20 * density).toInt()
@@ -43,6 +53,55 @@ class MainActivity : Activity() {
             setTextIsSelectable(true)
             movementMethod = ScrollingMovementMethod.getInstance()
             text = renderReport()
+        }
+
+        notificationDoctorStatus = TextView(this).apply {
+            textSize = 16f
+            setTextIsSelectable(true)
+        }
+
+        recentNotificationsStatus = TextView(this).apply {
+            textSize = 15f
+            setTextIsSelectable(true)
+            text = "No notification metadata viewed yet"
+        }
+
+        val refreshNotificationDoctorButton = Button(this).apply {
+            text = "Refresh Notification Doctor"
+            setOnClickListener {
+                refreshNotificationDoctor()
+                renderRecentNotifications()
+            }
+        }
+
+        val notificationAccessButton = Button(this).apply {
+            text = "Open Notification Access"
+            setOnClickListener {
+                startActivity(notificationDoctorAccess.notificationListenerSettingsIntent())
+            }
+        }
+
+        val usageAccessButton = Button(this).apply {
+            text = "Open Usage Access"
+            setOnClickListener {
+                startActivity(notificationDoctorAccess.usageAccessSettingsIntent())
+            }
+        }
+
+        val recentNotificationsButton = Button(this).apply {
+            text = "Show Recent Delivery Metadata"
+            setOnClickListener {
+                renderRecentNotifications()
+            }
+        }
+
+        val clearNotificationMetadataButton = Button(this).apply {
+            text = "Clear Notification Metadata"
+            setOnClickListener {
+                NotificationEventStore.clear()
+                renderRecentNotifications()
+                refreshNotificationDoctor()
+            }
         }
 
         localBridgeStatus = TextView(this).apply {
@@ -117,9 +176,19 @@ class MainActivity : Activity() {
             setPadding(padding, padding, padding, padding)
 
             addView(output)
+
+            addSectionHeading("Notification Doctor", spacing)
+            addView(notificationDoctorStatus)
+            addView(refreshNotificationDoctorButton)
+            addView(notificationAccessButton)
+            addView(usageAccessButton)
+            addView(recentNotificationsButton)
+            addView(clearNotificationMetadataButton)
             addSpacer(spacing)
+            addView(recentNotificationsStatus)
+
+            addSectionHeading("Local Bridge", spacing)
             addView(localBridgeStatus)
-            addSpacer(spacing)
             addView(scanBridgeButton)
             addView(pairingCodeInput)
             addView(pairButton)
@@ -139,11 +208,72 @@ class MainActivity : Activity() {
                 )
             }
         )
+
+        refreshNotificationDoctor()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (::notificationDoctorAccess.isInitialized) {
+            refreshNotificationDoctor()
+        }
     }
 
     override fun onDestroy() {
         localBridgeController.close()
         super.onDestroy()
+    }
+
+    private fun refreshNotificationDoctor() {
+        val listenerAccess = notificationDoctorAccess.hasNotificationListenerAccess()
+        val usageAccess = notificationDoctorAccess.hasUsageAccess()
+        val eventCount = NotificationEventStore.size()
+
+        notificationDoctorStatus.text = buildString {
+            appendLine("Notification access: ${if (listenerAccess) "ENABLED" else "NOT ENABLED"}")
+            appendLine("Usage access: ${if (usageAccess) "ENABLED" else "NOT ENABLED"}")
+            append("Recent in-memory delivery events: $eventCount")
+        }
+    }
+
+    private fun renderRecentNotifications() {
+        val events = NotificationEventStore.snapshot(limit = 20)
+
+        if (events.isEmpty()) {
+            recentNotificationsStatus.text =
+                "No notification delivery metadata observed in this process session."
+            return
+        }
+
+        recentNotificationsStatus.text = buildString {
+            events.forEachIndexed { index, event ->
+                val assessment = NotificationPresentationClassifier.classify(
+                    importance = event.importance,
+                    suspended = event.suspended,
+                    suppressedVisualEffects = event.suppressedVisualEffects
+                )
+
+                val marker = when (assessment.state) {
+                    PresentationState.HEALTHY -> "[PASS]"
+                    PresentationState.ATTENTION -> "[CHECK]"
+                    PresentationState.INFO -> "[INFO]"
+                }
+
+                appendLine("$marker ${event.packageName}")
+                appendLine("  observed ${event.observationDelayMillis} ms after post timestamp")
+                appendLine(
+                    "  importance=${event.importance}" +
+                        " channel=${event.channelImportance ?: "unknown"}" +
+                        " screen=${if (event.screenInteractive) "on" else "off"}" +
+                        " locked=${event.keyguardLocked}" +
+                        " saver=${event.powerSaveMode}"
+                )
+                appendLine("  ${assessment.summary}")
+                if (index != events.lastIndex) {
+                    appendLine()
+                }
+            }
+        }
     }
 
     private fun scanBridge() {
@@ -174,6 +304,17 @@ class MainActivity : Activity() {
         } else {
             updateBridgeActions()
         }
+    }
+
+    private fun LinearLayout.addSectionHeading(title: String, spacing: Int) {
+        addSpacer(spacing)
+        addView(
+            TextView(this@MainActivity).apply {
+                text = title
+                textSize = 20f
+            }
+        )
+        addSpacer(spacing / 2)
     }
 
     private fun LinearLayout.addSpacer(height: Int) {
@@ -253,7 +394,7 @@ class MainActivity : Activity() {
 
         return buildString {
             appendLine("986 CN Guard")
-            appendLine("Read-only diagnostic baseline")
+            appendLine("Diagnostic and compatibility baseline")
             appendLine()
             appendLine(report.deviceSummary)
             appendLine()
