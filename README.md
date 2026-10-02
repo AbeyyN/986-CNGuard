@@ -4,7 +4,7 @@
 
 The project focuses on notification reliability, Google/Firebase push transport, Xiaomi background execution controls, notification presentation, and related compatibility problems that can affect daily-use and banking applications.
 
-> **Status:** pre-alpha. The repository is under active development and does not yet provide a production-ready repair mode.
+> **Status:** alpha development. Diagnostic features are usable for testing, but Xiaomi-specific repair support is not yet declared stable.
 
 ## Goals
 
@@ -15,41 +15,30 @@ The project focuses on notification reliability, Google/Firebase push transport,
 - Verify every repair and keep a rollback path.
 - Make Shizuku and root optional rather than prerequisites.
 
-## Architecture direction
-
-The project is capability-first:
-
-```text
-device probe
-    |
-    +-- Android / ROM capabilities
-    +-- Google Play services / FCM
-    +-- Xiaomi PowerKeeper / Greezer / Aurogon
-    +-- per-app execution state
-    +-- notification presentation
-            |
-            v
-      diagnostic report
-            |
-            v
-      adapter + verified action
-```
-
-HyperOS and Android version numbers are useful signals, but they are not treated as the only source of truth. Feature availability is determined by runtime probes and adapter support.
-
 ## Capability levels
 
 ```text
-Standard
-    |
+Standard diagnostics
+        |
 Enhanced Android access
-    |
+        |
 Local Bridge
-    |
+        |
 Shizuku / root fallback
 ```
 
-Local Bridge is the preferred advanced path. It is intended to provide bounded Wireless ADB diagnostics and repair actions from inside CN Guard without requiring Termux or Shizuku. It is not a general-purpose shell.
+Local Bridge is the preferred advanced path. It pairs with Android Wireless Debugging directly inside CN Guard and does not require Termux or Shizuku. The bridge is intentionally bounded; CN Guard does not expose a general-purpose ADB terminal.
+
+## Current Local Bridge scope
+
+- discover the current phone's ADB pairing and connect services;
+- pair with a six-digit Wireless Debugging code;
+- persist the CN Guard ADB host identity in app-private storage;
+- verify an authenticated ADB connection;
+- inspect Greezer service visibility;
+- inspect whether Google Play services has an established FCM socket on ports 5228–5230.
+
+Repair commands remain disabled until physical Xiaomi CN-ROM verification is complete.
 
 ## Initial roadmap
 
@@ -59,22 +48,23 @@ Local Bridge is the preferred advanced path. It is intended to provide bounded W
 4. Per-app notification and execution diagnostics
 5. Notification channel and heads-up diagnostics
 6. Verified safe-fix flows
-7. Local Bridge discovery, pairing, and typed repair actions
-8. Optional Shizuku and root adapters
-9. Malaysia-focused compatibility profiles
-10. Push latency test lab
-11. Signed compatibility rule packs
+7. Local Bridge pairing and typed diagnostics
+8. Verified Local Bridge repair actions
+9. Optional Shizuku and root adapters
+10. Malaysia-focused compatibility profiles
+11. Push latency test lab
+12. Signed compatibility rule packs
 
 ## Safety model
 
 The core application uses the least privilege required for diagnostics. Privileged operations are explicit and isolated behind adapters.
 
-Local Bridge accepts predefined typed actions only. Remote compatibility data must not provide arbitrary command execution. Any future rule-pack system will be restricted to predefined actions, versioned, signed, and rollbackable.
+Local Bridge accepts predefined typed operations only. Remote compatibility data must not provide arbitrary command execution.
 
 ## Development
 
-See [WORKFLOW.md](WORKFLOW.md), [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), and [docs/LOCAL_BRIDGE.md](docs/LOCAL_BRIDGE.md).
+See [WORKFLOW.md](WORKFLOW.md), [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), [docs/LOCAL_BRIDGE.md](docs/LOCAL_BRIDGE.md), and [docs/SUPPORT_MATRIX.md](docs/SUPPORT_MATRIX.md).
 
 ## License
 
-License selection is pending before the first public release.
+Release licensing is GPL-compatible because the current Wireless ADB pairing transport includes a GPL-3.0 SPAKE2 dependency. A full license and third-party notice set will be included before the first tagged release.

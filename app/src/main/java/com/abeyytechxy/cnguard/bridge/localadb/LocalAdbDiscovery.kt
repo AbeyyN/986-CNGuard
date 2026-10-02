@@ -4,8 +4,10 @@ import android.content.Context
 import android.net.nsd.NsdManager
 import android.net.nsd.NsdServiceInfo
 import android.net.wifi.WifiManager
+import android.os.Build
 import android.os.Handler
 import android.os.Looper
+import java.net.NetworkInterface
 import java.util.concurrent.atomic.AtomicBoolean
 
 class LocalAdbDiscovery(context: Context) {
@@ -51,14 +53,8 @@ class LocalAdbDiscovery(context: Context) {
 
         acquireMulticastLock()
 
-        startDiscovery(
-            serviceType = PAIRING_SERVICE_TYPE,
-            kind = AdbServiceKind.PAIRING
-        )
-        startDiscovery(
-            serviceType = CONNECT_SERVICE_TYPE,
-            kind = AdbServiceKind.CONNECT
-        )
+        startDiscovery(PAIRING_SERVICE_TYPE, AdbServiceKind.PAIRING)
+        startDiscovery(CONNECT_SERVICE_TYPE, AdbServiceKind.CONNECT)
 
         handler.postDelayed(finishRunnable, timeoutMs.coerceAtLeast(1_000L))
     }
@@ -79,15 +75,7 @@ class LocalAdbDiscovery(context: Context) {
             override fun onDiscoveryStarted(regType: String) = Unit
 
             override fun onServiceFound(serviceInfo: NsdServiceInfo) {
-                val service = LocalAdbService(
-                    kind = kind,
-                    serviceName = serviceInfo.serviceName
-                )
-
-                when (kind) {
-                    AdbServiceKind.PAIRING -> pairingService = service
-                    AdbServiceKind.CONNECT -> connectService = service
-                }
+                resolveService(serviceInfo, kind)
             }
 
             override fun onServiceLost(serviceInfo: NsdServiceInfo) {
@@ -132,6 +120,70 @@ class LocalAdbDiscovery(context: Context) {
         }
     }
 
+    @Suppress("DEPRECATION")
+    private fun resolveService(
+        serviceInfo: NsdServiceInfo,
+        kind: AdbServiceKind
+    ) {
+        runCatching {
+            nsdManager.resolveService(
+                serviceInfo,
+                object : NsdManager.ResolveListener {
+                    override fun onResolveFailed(serviceInfo: NsdServiceInfo, errorCode: Int) {
+                        lastError = "mDNS resolve failed ($errorCode)"
+                    }
+
+                    override fun onServiceResolved(resolved: NsdServiceInfo) {
+                        val host = resolvedHost(resolved) ?: return
+                        val port = resolved.port
+                        if (port !in 1..65535 || !isLocalDeviceAddress(host)) {
+                            return
+                        }
+
+                        val service = LocalAdbService(
+                            kind = kind,
+                            serviceName = resolved.serviceName,
+                            host = host,
+                            port = port
+                        )
+
+                        when (kind) {
+                            AdbServiceKind.PAIRING -> pairingService = service
+                            AdbServiceKind.CONNECT -> connectService = service
+                        }
+                    }
+                }
+            )
+        }.onFailure {
+            lastError = it.message ?: it.javaClass.simpleName
+        }
+    }
+
+    @Suppress("DEPRECATION")
+    private fun resolvedHost(serviceInfo: NsdServiceInfo): String? {
+        val address = if (Build.VERSION.SDK_INT >= 34) {
+            serviceInfo.hostAddresses.firstOrNull()
+        } else {
+            serviceInfo.host
+        }
+        return address?.hostAddress?.substringBefore('%')
+    }
+
+    private fun isLocalDeviceAddress(host: String): Boolean {
+        val normalized = host.substringBefore('%')
+        return runCatching {
+            NetworkInterface.getNetworkInterfaces()
+                ?.toList()
+                .orEmpty()
+                .flatMap { networkInterface ->
+                    networkInterface.inetAddresses.toList()
+                }
+                .any { address ->
+                    address.hostAddress?.substringBefore('%') == normalized
+                }
+        }.getOrDefault(false)
+    }
+
     private fun finishDiscovery() {
         if (!active.compareAndSet(true, false)) {
             return
@@ -144,17 +196,17 @@ class LocalAdbDiscovery(context: Context) {
         releaseMulticastLock()
 
         val snapshot = when {
-            connectService != null -> LocalBridgeSnapshot(
+            connectService?.isResolved == true -> LocalBridgeSnapshot(
                 state = LocalBridgeState.AVAILABLE,
                 pairingService = pairingService,
                 connectService = connectService,
-                detail = "Wireless ADB connect service detected"
+                detail = "Local Wireless ADB connect service detected"
             )
 
-            pairingService != null -> LocalBridgeSnapshot(
+            pairingService?.isResolved == true -> LocalBridgeSnapshot(
                 state = LocalBridgeState.PAIRING_REQUIRED,
                 pairingService = pairingService,
-                detail = "ADB pairing service detected"
+                detail = "Local ADB pairing service detected"
             )
 
             lastError != null -> LocalBridgeSnapshot(
@@ -164,7 +216,7 @@ class LocalAdbDiscovery(context: Context) {
 
             else -> LocalBridgeSnapshot(
                 state = LocalBridgeState.UNAVAILABLE,
-                detail = "No Wireless ADB service detected"
+                detail = "No local Wireless ADB service detected"
             )
         }
 
