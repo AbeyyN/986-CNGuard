@@ -28,6 +28,15 @@ android {
             isMinifyEnabled = false
         }
     }
+
+    packaging {
+        resources {
+            pickFirsts += setOf(
+                "META-INF/LICENSE.md",
+                "META-INF/NOTICE.md"
+            )
+        }
+    }
 }
 
 dependencies {
