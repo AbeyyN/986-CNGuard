@@ -13,6 +13,11 @@ sealed interface GuidedNavigationResult {
 
 class SafeSettingsNavigator(private val activity: Activity) {
     fun open(plan: GuidedFixPlan): GuidedNavigationResult {
+        val requiresPackage = plan.action == GuidedFixAction.APP_NOTIFICATIONS ||
+            plan.action == GuidedFixAction.APP_DETAILS
+        if (requiresPackage && !GuidedFixPlanner.isValidPackage(plan.packageName)) {
+            return GuidedNavigationResult.Unavailable
+        }
         val candidates = when (plan.action) {
             GuidedFixAction.APP_NOTIFICATIONS -> listOf(
                 Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
