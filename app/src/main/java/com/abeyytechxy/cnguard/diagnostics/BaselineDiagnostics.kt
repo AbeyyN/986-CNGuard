@@ -13,7 +13,8 @@ object BaselineDiagnostics {
 
     fun collect(context: Context): DiagnosticReport {
         val items = buildList {
-            add(deviceVendor())
+            add(deviceVendor(context))
+            add(romRegionProbe())
             add(packageProbe(context, GMS_PACKAGE, "Google Play services"))
             add(packageProbe(context, SECURITY_CENTER_PACKAGE, "Xiaomi Security Center"))
             add(packageProbe(context, POWERKEEPER_PACKAGE, "Xiaomi PowerKeeper"))
@@ -22,6 +23,7 @@ object BaselineDiagnostics {
 
         val deviceSummary = listOf(
             Build.MANUFACTURER,
+            Build.BRAND,
             Build.MODEL,
             "Android ${Build.VERSION.RELEASE}",
             "API ${Build.VERSION.SDK_INT}"
@@ -33,20 +35,62 @@ object BaselineDiagnostics {
         )
     }
 
-    private fun deviceVendor(): DiagnosticItem {
-        val isXiaomi = Build.MANUFACTURER.equals("Xiaomi", ignoreCase = true)
-        return DiagnosticItem(
-            id = "device.vendor",
-            state = if (isXiaomi) DiagnosticState.PASS else DiagnosticState.UNSUPPORTED,
-            title = "Xiaomi device",
-            summary = if (isXiaomi) {
-                "Xiaomi manufacturer detected"
-            } else {
-                "This baseline targets Xiaomi firmware behavior"
-            },
-            detail = Build.MANUFACTURER
+    private fun deviceVendor(context: Context): DiagnosticItem {
+        val family = DeviceFamilyClassifier.classify(
+            manufacturer = Build.MANUFACTURER,
+            brand = Build.BRAND,
+            securityCenterPresent = packageVisible(context, SECURITY_CENTER_PACKAGE),
+            powerKeeperPresent = packageVisible(context, POWERKEEPER_PACKAGE)
         )
+
+        return when (family) {
+            XiaomiFamilyState.XIAOMI_FAMILY -> DiagnosticItem(
+                id = "device.family",
+                state = DiagnosticState.PASS,
+                title = "Xiaomi / Redmi / POCO family signal",
+                summary = "Hardware or vendor-package signals match Xiaomi family",
+                detail = "ROM region is not established by this classification"
+            )
+            XiaomiFamilyState.UNCONFIRMED -> DiagnosticItem(
+                id = "device.family",
+                state = DiagnosticState.UNKNOWN,
+                title = "Device family",
+                summary = "Xiaomi family could not be confirmed"
+            )
+            XiaomiFamilyState.OTHER_MANUFACTURER -> DiagnosticItem(
+                id = "device.family",
+                state = DiagnosticState.INFO,
+                title = "Non-Xiaomi manufacturer",
+                summary = "General Android notification diagnostics remain available"
+            )
+        }
     }
+
+    private fun romRegionProbe(): DiagnosticItem = DiagnosticItem(
+        id = "rom.region",
+        state = DiagnosticState.UNKNOWN,
+        title = "China-ROM verification",
+        summary = "Not established by manufacturer, language, or a package name",
+        detail = "Only device/build-specific verification may establish ROM region"
+    )
+
+    private fun packageVisible(context: Context, packageName: String): Boolean? =
+        try {
+            @Suppress("DEPRECATION")
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                context.packageManager.getPackageInfo(
+                    packageName,
+                    PackageManager.PackageInfoFlags.of(0)
+                )
+            } else {
+                context.packageManager.getPackageInfo(packageName, 0)
+            }
+            true
+        } catch (_: PackageManager.NameNotFoundException) {
+            false
+        } catch (_: Exception) {
+            null
+        }
 
     private fun packageProbe(
         context: Context,
