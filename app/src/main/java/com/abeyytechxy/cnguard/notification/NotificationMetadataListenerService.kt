@@ -1,7 +1,7 @@
 package com.abeyytechxy.cnguard.notification
 
 import android.app.KeyguardManager
-import android.app.NotificationListenerService
+import android.service.notification.NotificationListenerService
 import android.os.PowerManager
 import android.service.notification.NotificationListenerService.Ranking
 import android.service.notification.NotificationListenerService.RankingMap
