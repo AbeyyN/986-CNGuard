@@ -46,8 +46,8 @@ object NotificationPresentationClassifier {
 
         if (importance >= IMPORTANCE_HIGH) {
             return PresentationAssessment(
-                PresentationState.HEALTHY,
-                "High-importance notification delivery observed"
+                PresentationState.INFO,
+                "High-importance notification observed; heads-up display not verified"
             )
         }
 
