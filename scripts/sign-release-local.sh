@@ -52,7 +52,7 @@ rm -f -- "$aligned" "$staged"
 report="$("$apksigner" verify --verbose --print-certs "$staged")"
 # Android Build Tools 37 uses "V2 Signer:" or "V3.0 Signer:" rather than
 # the older "Signer #1" label. Match certificate digest, not public key.
-fingerprint="$(printf '%s\\n' "$report" |
+fingerprint="$(printf '%s' "$report" |
   awk '/certificate SHA-256 digest:/ {print $NF; exit}')"
 test -n "$fingerprint" || fail "Cannot extract signing certificate fingerprint"
 
