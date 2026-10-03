@@ -53,6 +53,43 @@ jobs:
           sha256sum "$apk" > release-unsigned-checksum.txt
           printf '%s\n' 'The checksum above is for an UNSIGNED validation APK, not a distributable release.'
 
+      - name: Validate license, pinned public certificate, and dependency baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s LICENSE
+          grep -q 'GNU GENERAL PUBLIC LICENSE' LICENSE
+          test -s THIRD_PARTY_NOTICES.md
+          expected='a693c068e91e410424de88fd5ba42c60a04e13a4edd4d271e17e694b1e195cde'
+          actual="$(openssl x509 -in release/signing-certificate.pem -noout -fingerprint -sha256 | cut -d= -f2 | tr -d ':' | tr '[:upper:]' '[:lower:]')"
+          test "$actual" = "$expected"
+          grep -Fq 'com.github.Flyfish233:spake2-java:1.1.1' release-runtime-dependencies.txt
+          grep -Fq 'org.bouncycastle:bcprov-jdk18on:1.86' release-runtime-dependencies.txt
+          echo "Approved GPLv3 and public cert pins passed; full transitive audit remains a human gate."
+
+      - name: Create unsigned candidate provenance
+        shell: bash
+        run: |
+          set -euo pipefail
+          sha256sum app/build/outputs/apk/release/app-release-unsigned.apk > unsigned-candidate.sha256
+          {
+            echo "source_commit=$(git rev-parse HEAD)"
+            echo "project_license=GPL-3.0-only"
+            echo "public_signing_cert_sha256=a693c068e91e410424de88fd5ba42c60a04e13a4edd4d271e17e694b1e195cde"
+            echo "candidate=UNSIGNED_TEST_ONLY_NOT_A_RELEASE"
+          } > unsigned-candidate-provenance.txt
+
+      - name: Upload unsigned APK for private offline signing
+        uses: actions/upload-artifact@v4
+        with:
+          name: cnguard-unsigned-candidate
+          path: |
+            app/build/outputs/apk/release/app-release-unsigned.apk
+            unsigned-candidate.sha256
+            unsigned-candidate-provenance.txt
+          if-no-files-found: error
+          retention-days: 14
+
       - name: Upload dependency inventory and unsigned checksum
         uses: actions/upload-artifact@v4
         with:
@@ -60,4 +97,8 @@ jobs:
           path: |
             release-runtime-dependencies.txt
             release-unsigned-checksum.txt
+            unsigned-candidate-provenance.txt
+            LICENSE
+            THIRD_PARTY_NOTICES.md
+            third_party/licenses/
           retention-days: 30
