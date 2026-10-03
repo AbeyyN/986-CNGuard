@@ -39,6 +39,10 @@ jobs:
       - name: Test, assemble unsigned release, and lint
         run: gradle --no-daemon :app:testDebugUnitTest :app:assembleRelease :app:lintRelease
 
+      - name: Exercise offline signing with disposable CI-only identity
+        shell: bash
+        run: bash scripts/test-signing-helper-ci.sh
+
       - name: Record dependency graph and unsigned APK checksum
         shell: bash
         run: |
