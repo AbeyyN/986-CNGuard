@@ -50,7 +50,7 @@ CN Guard resolves those services through Android NSD and accepts only endpoints 
 
 ## Pairing transport
 
-The transport adapter uses Kadb for the ADB wire protocol and pairing flow. CN Guard persists only its private ADB host identity in the app's private files directory. Pairing codes are not persisted.
+The transport adapter uses Kadb for the ADB wire protocol and pairing flow. CN Guard persists only its private ADB host identity in the app's private files directory. Pairing codes are not persisted. The PIN input is masked, limited to six digits, excluded from Android UI state restoration and autofill, and cleared immediately when Pair is tapped or the activity is destroyed. The app still needs its dedicated persisted ADB host identity for subsequent trusted connects. Do not put temporary pairing codes into support reports, screenshots or logs.
 
 The APK currently uses Kadb 2.1.4. Its Android pairing path includes a GPL-3.0 SPAKE2 dependency, so release licensing must remain GPL-compatible.
 
