@@ -46,6 +46,7 @@ rm -f -- "$aligned" "$staged"
   --ks-key-alias "$CNGUARD_RELEASE_ALIAS" \
   --ks-pass env:CNGUARD_KEYSTORE_PASSWORD \
   --key-pass env:CNGUARD_KEY_PASSWORD \
+  --v4-signing-enabled false \
   --out "$staged" \
   "$aligned"
 
