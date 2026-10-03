@@ -30,6 +30,10 @@ The ADB host private key used by Local Bridge is stored in the application's pri
 
 The local alert test requests POST_NOTIFICATIONS only when the user starts the test. It posts a fixed CN Guard notification generated on the phone. It does not use a cloud service, Firebase token, other app's message content, or remote FCM transport. Notification channel importance does not prove a heads-up popup was displayed.
 
+## Optional Google endpoint reachability test
+
+Only when requested, CN Guard initiates ordinary TCP connection attempts to the fixed Google hostname `mtalk.google.com` on documented FCM firewall ports. It does not transmit message contents, Google/Firebase tokens, account data, or device identifiers. As with any network connection, Google and the network provider may observe the source IP; the app does not persist resolved IPs or report these results to a CN Guard backend. This checks network reachability, not remote FCM delivery.
+
 ## Notification diagnostics
 
 If optional notification access is introduced, the diagnostic design is limited to delivery metadata required to determine whether a notification was posted and how it was ranked or presented. Notification content is not required and must not be retained by the diagnostic history.

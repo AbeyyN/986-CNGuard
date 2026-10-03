@@ -61,6 +61,10 @@ A manual local-notification test can check whether Android accepts a CN Guard no
 
 Usage Access is not requested by the current build because no implemented diagnostic consumes UsageStats data.
 
+## Optional Google endpoint reachability test
+
+A manual test checks ordinary TCP connectivity from the current device network to documented Google FCM endpoints. A successful socket connection is not proof that a push notification was delivered. See [FCM network probe](docs/FCM_NETWORK_PROBE.md).
+
 ## Safety model
 
 The core application uses the least privilege required for diagnostics. Privileged operations are explicit and isolated behind adapters.
