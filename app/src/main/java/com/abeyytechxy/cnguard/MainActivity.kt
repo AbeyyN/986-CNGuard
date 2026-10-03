@@ -20,6 +20,7 @@ import com.abeyytechxy.cnguard.bridge.localadb.LocalBridgeSnapshot
 import com.abeyytechxy.cnguard.bridge.localadb.LocalBridgeState
 import com.abeyytechxy.cnguard.diagnostics.BaselineDiagnostics
 import com.abeyytechxy.cnguard.diagnostics.DiagnosticState
+import com.abeyytechxy.cnguard.diagnostics.FcmNetworkProbe
 import com.abeyytechxy.cnguard.fixes.GuidedFixAction
 import com.abeyytechxy.cnguard.fixes.GuidedFixPlanner
 import com.abeyytechxy.cnguard.fixes.GuidedNavigationResult
@@ -29,8 +30,12 @@ import com.abeyytechxy.cnguard.notification.LocalAlertLab
 import com.abeyytechxy.cnguard.notification.NotificationEventStore
 import com.abeyytechxy.cnguard.notification.NotificationPresentationClassifier
 import com.abeyytechxy.cnguard.notification.PresentationState
+import java.util.concurrent.Executors
 
 class MainActivity : Activity() {
+    private val networkExecutor = Executors.newSingleThreadExecutor()
+    private lateinit var networkProbeButton: Button
+    private lateinit var networkProbeStatus: TextView
     companion object {
         private const val LOCAL_ALERT_PERMISSION_REQUEST = 986
     }
@@ -105,6 +110,29 @@ class MainActivity : Activity() {
         val localAlertButton = Button(this).apply {
             text = "Send Local Test Alert"
             setOnClickListener { requestLocalAlertTest() }
+        }
+
+        networkProbeStatus = TextView(this).apply {
+            textSize = 15f
+            setTextIsSelectable(true)
+            text = "Google push network path not tested. This is not an FCM delivery test."
+        }
+
+        networkProbeButton = Button(this).apply {
+            text = "Test Google Push Network"
+            setOnClickListener {
+                isEnabled = false
+                networkProbeStatus.text = "Checking Google's TCP endpoints on the default network..."
+                networkExecutor.execute {
+                    val result = FcmNetworkProbe.run()
+                    runOnUiThread {
+                        if (!isDestroyed && !isFinishing) {
+                            networkProbeStatus.text = result.summary
+                            networkProbeButton.isEnabled = true
+                        }
+                    }
+                }
+            }
         }
 
         val recentNotificationsButton = Button(this).apply {
@@ -254,6 +282,8 @@ class MainActivity : Activity() {
             addView(notificationAccessButton)
             addView(localAlertButton)
             addView(localAlertStatus)
+            addView(networkProbeButton)
+            addView(networkProbeStatus)
             addView(recentNotificationsButton)
             addView(clearNotificationMetadataButton)
             addSpacer(spacing)
@@ -295,6 +325,7 @@ class MainActivity : Activity() {
     }
 
     override fun onDestroy() {
+        networkExecutor.shutdownNow()
         localBridgeController.close()
         super.onDestroy()
     }
