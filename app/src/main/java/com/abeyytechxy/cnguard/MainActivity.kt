@@ -5,8 +5,10 @@ import android.app.Activity
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.text.InputFilter
 import android.text.InputType
 import android.text.method.ScrollingMovementMethod
+import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
@@ -159,7 +161,10 @@ class MainActivity : Activity() {
 
         pairingCodeInput = EditText(this).apply {
             hint = "6-digit pairing code"
-            inputType = InputType.TYPE_CLASS_NUMBER
+            inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_VARIATION_PASSWORD
+            filters = arrayOf(InputFilter.LengthFilter(6))
+            importantForAutofill = View.IMPORTANT_FOR_AUTOFILL_NO
+            isSaveEnabled = false
             isSingleLine = true
         }
 
@@ -172,12 +177,15 @@ class MainActivity : Activity() {
             text = "Pair Local Bridge"
             isEnabled = false
             setOnClickListener {
+                val pairingCode = pairingCodeInput.text.toString()
+                pairingCodeInput.text.clear()
                 setBridgeBusy(true, "Pairing with local Wireless ADB...")
                 localBridgeController.pair(
                     service = bridgeSnapshot.pairingService,
-                    pairingCode = pairingCodeInput.text.toString()
+                    pairingCode = pairingCode
                 ) { result ->
                     runOnUiThread {
+                        if (isDestroyed || isFinishing) return@runOnUiThread
                         setBridgeBusy(false, renderResult(result))
                         scanBridge()
                     }
@@ -192,6 +200,7 @@ class MainActivity : Activity() {
                 setBridgeBusy(true, "Testing authenticated ADB connection...")
                 localBridgeController.testConnection(bridgeSnapshot.connectService) { result ->
                     runOnUiThread {
+                        if (isDestroyed || isFinishing) return@runOnUiThread
                         setBridgeBusy(false, renderResult(result))
                     }
                 }
@@ -205,6 +214,7 @@ class MainActivity : Activity() {
                 setBridgeBusy(true, "Running read-only bridge diagnostics...")
                 localBridgeController.runReadOnlyDiagnostics(bridgeSnapshot.connectService) { diagnostics ->
                     runOnUiThread {
+                        if (isDestroyed || isFinishing) return@runOnUiThread
                         setBridgeBusy(false, renderDiagnostics(diagnostics))
                     }
                 }
@@ -325,6 +335,7 @@ class MainActivity : Activity() {
     }
 
     override fun onDestroy() {
+        if (::pairingCodeInput.isInitialized) pairingCodeInput.text.clear()
         networkExecutor.shutdownNow()
         localBridgeController.close()
         super.onDestroy()
@@ -439,6 +450,7 @@ class MainActivity : Activity() {
         setBridgeBusy(true, "Local Bridge: scanning local Wireless ADB services...")
         localBridgeController.discover { snapshot ->
             runOnUiThread {
+                if (isDestroyed || isFinishing) return@runOnUiThread
                 bridgeSnapshot = snapshot
                 setBridgeBusy(false, renderBridgeSnapshot(snapshot))
                 updateBridgeActions()
