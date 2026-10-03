@@ -1,6 +1,5 @@
 package com.abeyytechxy.cnguard.diagnostics
 
-import android.os.SystemClock
 import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.net.Socket
