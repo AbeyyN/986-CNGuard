@@ -18,7 +18,7 @@ Before use:
    - `CNGUARD_SIGNED_APK`: new absolute output path in the authorized artifact store, outside GitHub.
    - `CNGUARD_ANDROID_BUILD_TOOLS`: Android build-tools directory containing `zipalign` and `apksigner`.
 
-Run `bash scripts/sign-release-local.sh` from the reviewed source checkout. The helper validates required inputs, refuses in-repository secrets/output and existing target files, aligns the APK, signs it, verifies the signature, checks certificate continuity and prints the signed-file checksum.
+Run `bash scripts/sign-release-local.sh` from the reviewed source checkout. The helper validates required inputs, refuses in-repository secrets/output and existing target files, aligns the APK, signs it with the Android v2/v3 scheme supported by the target SDK, explicitly disables the optional v4 sidecar to avoid orphaned staging files, verifies the signature, checks certificate continuity and prints the signed-file checksum.
 
 **No stable release** is established by a successful signing command alone. The support matrix and physical Xiaomi CN-ROM, banking-sensitive setup and notification/FCM verification gates must also be satisfied. Keep the signed APK under the project's authoritative artifact policy rather than making GitHub source or CI logs a signing-secret store.
 

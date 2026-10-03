@@ -43,6 +43,11 @@ export CNGUARD_SIGNED_APK="$tmp/signed-only-for-ci.apk"
 
 bash scripts/sign-release-local.sh > "$tmp/signing.log"
 test -s "$CNGUARD_SIGNED_APK"
+# The release helper must not leave an auxiliary v4 signature sidecar.
+if find "$tmp" -maxdepth 1 -name "*.idsig" | grep -q .; then
+  echo "FAIL: unexpected v4 sidecar was created" >&2
+  exit 1
+fi
 "$tools/apksigner" verify --verbose --print-certs "$CNGUARD_SIGNED_APK"   > "$tmp/verification.log"
 
 # A wrong pinned cert MUST fail closed and MUST NOT publish any output.
