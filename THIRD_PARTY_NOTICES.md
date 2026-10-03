@@ -28,7 +28,7 @@ The Release Readiness workflow run [37120817156](https://github.com/AbeyyN/986-C
 - Bouncy Castle `bcprov`, `bcpkix`, and `bcutil` all resolved to **1.86**. The Kadb transitive request for 1.84 was overridden by this project.
 - Okio runtime **3.17.0**, AndroidX DocumentFile **1.1.0**, AndroidHiddenApiBypass **6.1**, Kotlin standard library **2.4.20**, Kotlin coroutines **1.11.0**.
 
-These are the versions in that single audited CI run; each release candidate must regenerate and review its own inventory. Other AndroidX, annotations and transitive artifact notices still need a distribution audit.
+These are the versions in that single audited CI run; each release candidate must regenerate and review its own inventory. The full resolved AndroidX/annotation/Google/JetBrains subset is itemized in [Release dependency license inventory](docs/RELEASE_DEPENDENCY_AUDIT.md). Exact embedded notices and full final publication compliance remain a separate human gate.
 
 ## Release blockers
 
