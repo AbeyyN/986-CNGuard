@@ -30,6 +30,7 @@ class SafeSettingsNavigator(private val activity: Activity) {
 
             GuidedFixAction.XIAOMI_AUTOSTART -> listOf(
                 Intent("miui.intent.action.OP_AUTO_START").apply {
+                    setPackage("com.miui.securitycenter")
                     addCategory(Intent.CATEGORY_DEFAULT)
                 },
                 Intent().apply {
