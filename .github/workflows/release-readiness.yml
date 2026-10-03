@@ -36,6 +36,13 @@ jobs:
       - name: Validate offline signing helper syntax
         run: bash -n scripts/sign-release-local.sh
 
+      - name: Validate read-only field preflight in simulated device scenarios
+        shell: bash
+        run: |
+          bash -n scripts/field-device-preflight.sh
+          bash -n scripts/test-field-preflight-ci.sh
+          bash scripts/test-field-preflight-ci.sh
+
       - name: Test, assemble unsigned release, and lint
         run: gradle --no-daemon :app:testDebugUnitTest :app:assembleRelease :app:lintRelease
 
