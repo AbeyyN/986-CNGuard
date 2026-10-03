@@ -26,10 +26,6 @@ class LocalBridgeTransport(context: Context) {
         Thread(runnable, "cnguard-local-bridge").apply { isDaemon = true }
     }
 
-    init {
-        configureIdentity()
-    }
-
     fun pair(
         service: LocalAdbService?,
         pairingCode: String,
@@ -46,6 +42,7 @@ class LocalBridgeTransport(context: Context) {
 
         executor.execute {
             val result = runCatching {
+                configureIdentity()
                 runBlocking {
                     Kadb.pair(
                         host = endpoint.first,
@@ -75,6 +72,7 @@ class LocalBridgeTransport(context: Context) {
 
         executor.execute {
             val result = runCatching {
+                configureIdentity()
                 open(endpoint).use { adb ->
                     val response = adb.shell("echo 986-cnguard")
                     val ok = response.exitCode == 0 && response.output.trim() == "986-cnguard"
@@ -119,6 +117,7 @@ class LocalBridgeTransport(context: Context) {
 
         executor.execute {
             val diagnostics = runCatching {
+                configureIdentity()
                 open(endpoint).use { adb ->
                     buildList {
                         add(probeGreezer(adb))

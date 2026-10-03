@@ -27,14 +27,14 @@ class NotificationPresentationClassifierTest {
     }
 
     @Test
-    fun highImportanceWithoutSuppressionIsHealthy() {
+    fun highImportanceWithoutSuppressionDoesNotProveHeadsUp() {
         val result = NotificationPresentationClassifier.classify(
             importance = 4,
             suspended = false,
             suppressedVisualEffects = 0
         )
 
-        assertEquals(PresentationState.HEALTHY, result.state)
+        assertEquals(PresentationState.INFO, result.state)
     }
 
     @Test
