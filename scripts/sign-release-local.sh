@@ -50,14 +50,17 @@ rm -f -- "$aligned" "$staged"
   "$aligned"
 
 report="$("$apksigner" verify --verbose --print-certs "$staged")"
-fingerprint="$(printf '%s\n' "$report" |
-  sed -n 's/^Signer #1 certificate SHA-256 digest: //p' | head -n 1)"
+# Android Build Tools 37 uses "V2 Signer:" or "V3.0 Signer:" rather than
+# the older "Signer #1" label. Match certificate digest, not public key.
+fingerprint="$(printf '%s\\n' "$report" |
+  awk '/certificate SHA-256 digest:/ {print $NF; exit}')"
 test -n "$fingerprint" || fail "Cannot extract signing certificate fingerprint"
 
 actual="$(printf '%s' "$fingerprint" | tr -d ':' | tr '[:upper:]' '[:lower:]')"
 expected="$(printf '%s' "$CNGUARD_EXPECTED_CERT_SHA256" | tr -d ':' | tr '[:upper:]' '[:lower:]')"
+[[ "$actual" =~ ^[0-9a-f]{64}$ ]] || fail "Invalid actual certificate digest"
+[[ "$expected" =~ ^[0-9a-f]{64}$ ]] || fail "Expected certificate digest must be 64 hex characters"
 test "$actual" = "$expected" || fail "Certificate fingerprint mismatch; no signed output published"
-
 ln "$staged" "$output" || fail "Could not atomically publish signed output"
 printf 'SIGNATURE VERIFIED; certificate SHA-256: %s\n' "$actual"
 sha256sum "$output"
