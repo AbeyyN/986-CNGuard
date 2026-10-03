@@ -55,6 +55,12 @@ Repair commands remain disabled until physical Xiaomi CN-ROM verification is com
 11. Push latency test lab
 12. Signed compatibility rule packs
 
+## Optional Local Alert Lab
+
+A manual local-notification test can check whether Android accepts a CN Guard notification and inspect the test channel importance. The POST_NOTIFICATIONS permission is requested only when that test is started. This is deliberately **not** an FCM push latency test and cannot establish whether another app receives push messages.
+
+Usage Access is not requested by the current build because no implemented diagnostic consumes UsageStats data.
+
 ## Safety model
 
 The core application uses the least privilege required for diagnostics. Privileged operations are explicit and isolated behind adapters.

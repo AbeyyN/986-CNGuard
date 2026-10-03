@@ -1,6 +1,9 @@
 package com.abeyytechxy.cnguard
 
+import android.Manifest
 import android.app.Activity
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.text.InputType
 import android.text.method.ScrollingMovementMethod
@@ -22,11 +25,16 @@ import com.abeyytechxy.cnguard.fixes.GuidedFixPlanner
 import com.abeyytechxy.cnguard.fixes.GuidedNavigationResult
 import com.abeyytechxy.cnguard.fixes.SafeSettingsNavigator
 import com.abeyytechxy.cnguard.notification.NotificationDoctorAccess
+import com.abeyytechxy.cnguard.notification.LocalAlertLab
 import com.abeyytechxy.cnguard.notification.NotificationEventStore
 import com.abeyytechxy.cnguard.notification.NotificationPresentationClassifier
 import com.abeyytechxy.cnguard.notification.PresentationState
 
 class MainActivity : Activity() {
+    companion object {
+        private const val LOCAL_ALERT_PERMISSION_REQUEST = 986
+    }
+
     private lateinit var localBridgeController: LocalBridgeController
     private lateinit var notificationDoctorAccess: NotificationDoctorAccess
 
@@ -38,6 +46,7 @@ class MainActivity : Activity() {
     private lateinit var pairingCodeInput: EditText
 
     private lateinit var notificationDoctorStatus: TextView
+    private lateinit var localAlertStatus: TextView
     private lateinit var guidedFixStatus: TextView
     private lateinit var diagnosticOutput: TextView
     private lateinit var recentNotificationsStatus: TextView
@@ -87,11 +96,15 @@ class MainActivity : Activity() {
             }
         }
 
-        val usageAccessButton = Button(this).apply {
-            text = "Open Usage Access"
-            setOnClickListener {
-                startActivity(notificationDoctorAccess.usageAccessSettingsIntent())
-            }
+        localAlertStatus = TextView(this).apply {
+            textSize = 15f
+            setTextIsSelectable(true)
+            text = "Local alert test not run. This does not test remote FCM transport."
+        }
+
+        val localAlertButton = Button(this).apply {
+            text = "Send Local Test Alert"
+            setOnClickListener { requestLocalAlertTest() }
         }
 
         val recentNotificationsButton = Button(this).apply {
@@ -239,7 +252,8 @@ class MainActivity : Activity() {
             addView(notificationDoctorStatus)
             addView(refreshNotificationDoctorButton)
             addView(notificationAccessButton)
-            addView(usageAccessButton)
+            addView(localAlertButton)
+            addView(localAlertStatus)
             addView(recentNotificationsButton)
             addView(clearNotificationMetadataButton)
             addSpacer(spacing)
@@ -305,13 +319,48 @@ class MainActivity : Activity() {
 
     private fun refreshNotificationDoctor() {
         val listenerAccess = notificationDoctorAccess.hasNotificationListenerAccess()
-        val usageAccess = notificationDoctorAccess.hasUsageAccess()
         val eventCount = NotificationEventStore.size()
 
         notificationDoctorStatus.text = buildString {
             appendLine("Notification access: ${if (listenerAccess) "ENABLED" else "NOT ENABLED"}")
-            appendLine("Usage access: ${if (usageAccess) "ENABLED" else "NOT ENABLED"}")
             append("Recent in-memory delivery events: $eventCount")
+        }
+    }
+
+    private fun requestLocalAlertTest() {
+        if (
+            Build.VERSION.SDK_INT >= 33 &&
+            checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) !=
+                PackageManager.PERMISSION_GRANTED
+        ) {
+            localAlertStatus.text = "Notification permission is needed for this optional local test."
+            requestPermissions(
+                arrayOf(Manifest.permission.POST_NOTIFICATIONS),
+                LOCAL_ALERT_PERMISSION_REQUEST
+            )
+            return
+        }
+        sendLocalAlert()
+    }
+
+    private fun sendLocalAlert() {
+        val result = LocalAlertLab(this).send()
+        localAlertStatus.text = result.summary
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == LOCAL_ALERT_PERMISSION_REQUEST) {
+            if (grantResults.firstOrNull() == PackageManager.PERMISSION_GRANTED) {
+                sendLocalAlert()
+            } else {
+                localAlertStatus.text =
+                    "Permission not granted. No local test notification was posted."
+            }
         }
     }
 

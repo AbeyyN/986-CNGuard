@@ -26,6 +26,10 @@ Wireless ADB pairing codes are used only for the active pairing attempt and are 
 
 The ADB host private key used by Local Bridge is stored in the application's private data directory. It is not part of diagnostic reports and is not uploaded by the application.
 
+## Optional local alert test
+
+The local alert test requests POST_NOTIFICATIONS only when the user starts the test. It posts a fixed CN Guard notification generated on the phone. It does not use a cloud service, Firebase token, other app's message content, or remote FCM transport. Notification channel importance does not prove a heads-up popup was displayed.
+
 ## Notification diagnostics
 
 If optional notification access is introduced, the diagnostic design is limited to delivery metadata required to determine whether a notification was posted and how it was ranked or presented. Notification content is not required and must not be retained by the diagnostic history.
