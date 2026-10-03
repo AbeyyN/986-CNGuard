@@ -17,6 +17,10 @@ import com.abeyytechxy.cnguard.bridge.localadb.LocalBridgeSnapshot
 import com.abeyytechxy.cnguard.bridge.localadb.LocalBridgeState
 import com.abeyytechxy.cnguard.diagnostics.BaselineDiagnostics
 import com.abeyytechxy.cnguard.diagnostics.DiagnosticState
+import com.abeyytechxy.cnguard.fixes.GuidedFixAction
+import com.abeyytechxy.cnguard.fixes.GuidedFixPlanner
+import com.abeyytechxy.cnguard.fixes.GuidedNavigationResult
+import com.abeyytechxy.cnguard.fixes.SafeSettingsNavigator
 import com.abeyytechxy.cnguard.notification.NotificationDoctorAccess
 import com.abeyytechxy.cnguard.notification.NotificationEventStore
 import com.abeyytechxy.cnguard.notification.NotificationPresentationClassifier
@@ -34,6 +38,8 @@ class MainActivity : Activity() {
     private lateinit var pairingCodeInput: EditText
 
     private lateinit var notificationDoctorStatus: TextView
+    private lateinit var guidedFixStatus: TextView
+    private lateinit var diagnosticOutput: TextView
     private lateinit var recentNotificationsStatus: TextView
 
     private var bridgeSnapshot = LocalBridgeSnapshot(LocalBridgeState.IDLE)
@@ -48,7 +54,7 @@ class MainActivity : Activity() {
         val padding = (20 * density).toInt()
         val spacing = (12 * density).toInt()
 
-        val output = TextView(this).apply {
+        diagnosticOutput = TextView(this).apply {
             textSize = 16f
             setTextIsSelectable(true)
             movementMethod = ScrollingMovementMethod.getInstance()
@@ -171,11 +177,63 @@ class MainActivity : Activity() {
             }
         }
 
+        guidedFixStatus = TextView(this).apply {
+            textSize = 15f
+            text = "Open a Settings page, make a change if appropriate, then return for a new scan."
+            setTextIsSelectable(true)
+        }
+
+        val gmsNotificationSettings = Button(this).apply {
+            text = "GMS Notification Settings"
+            setOnClickListener {
+                openGuidedFix(GuidedFixAction.APP_NOTIFICATIONS, "com.google.android.gms")
+            }
+        }
+
+        val whatsappNotificationSettings = Button(this).apply {
+            text = "WhatsApp Notification Settings"
+            setOnClickListener {
+                openGuidedFix(GuidedFixAction.APP_NOTIFICATIONS, "com.whatsapp")
+            }
+        }
+
+        val telegramNotificationSettings = Button(this).apply {
+            text = "Telegram Notification Settings"
+            setOnClickListener {
+                openGuidedFix(GuidedFixAction.APP_NOTIFICATIONS, "org.telegram.messenger")
+            }
+        }
+
+        val gmsAppDetails = Button(this).apply {
+            text = "Google Play Services App Details"
+            setOnClickListener {
+                openGuidedFix(GuidedFixAction.APP_DETAILS, "com.google.android.gms")
+            }
+        }
+
+        val xiaomiAutostart = Button(this).apply {
+            text = "Xiaomi Autostart Settings"
+            setOnClickListener { openGuidedFix(GuidedFixAction.XIAOMI_AUTOSTART) }
+        }
+
+        val batteryOptimization = Button(this).apply {
+            text = "Android Battery Optimization"
+            setOnClickListener { openGuidedFix(GuidedFixAction.BATTERY_OPTIMIZATION) }
+        }
+
         val content = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(padding, padding, padding, padding)
 
-            addView(output)
+            addView(diagnosticOutput)
+            addSectionHeading("Guided Safe Fixes", spacing)
+            addView(guidedFixStatus)
+            addView(gmsNotificationSettings)
+            addView(whatsappNotificationSettings)
+            addView(telegramNotificationSettings)
+            addView(gmsAppDetails)
+            addView(xiaomiAutostart)
+            addView(batteryOptimization)
 
             addSectionHeading("Notification Doctor", spacing)
             addView(notificationDoctorStatus)
@@ -216,12 +274,33 @@ class MainActivity : Activity() {
         super.onResume()
         if (::notificationDoctorAccess.isInitialized) {
             refreshNotificationDoctor()
+            if (::diagnosticOutput.isInitialized) {
+                diagnosticOutput.text = renderReport()
+            }
         }
     }
 
     override fun onDestroy() {
         localBridgeController.close()
         super.onDestroy()
+    }
+
+    private fun openGuidedFix(
+        action: GuidedFixAction,
+        targetPackage: String? = null
+    ) {
+        val plan = GuidedFixPlanner.create(action, targetPackage)
+        if (plan == null) {
+            guidedFixStatus.text = "Invalid app target"
+            return
+        }
+
+        guidedFixStatus.text = when (val result = SafeSettingsNavigator(this).open(plan)) {
+            is GuidedNavigationResult.Opened ->
+                "Settings page opened. No fix has been verified. " + result.instruction
+            GuidedNavigationResult.Unavailable ->
+                "The requested Settings page is unavailable on this device."
+        }
     }
 
     private fun refreshNotificationDoctor() {
