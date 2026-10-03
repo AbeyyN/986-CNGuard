@@ -18,7 +18,7 @@ This is a preliminary dependency notice and audit ledger for 986 CN Guard. It is
 
 Bouncy Castle source states that its license is read in the same way as MIT; its attribution and license text must accompany any binary distribution.
 
-Upstream license files are included for audit and release packaging. They do not assign a license to CN Guard's own source code.
+The original CN Guard project source is now owner-approved under GPL-3.0-only; see the repository-root `LICENSE`. These bundled upstream licenses and notices remain the respective rights-holders' terms, and inclusion in this project does not relicense their separate source.
 
 ## Resolved release dependency snapshot
 
@@ -33,9 +33,9 @@ These are the versions in that single audited CI run; each release candidate mus
 ## Release blockers
 
 - Re-run and audit the exact resolved runtime dependency graph for the final release candidate, including third-party notice obligations for all remaining transitives.
-- Have the repository owner select and add an appropriate GPL-compatible license for any distributed combined APK that includes GPL-licensed SPAKE2 code. Do not represent an undetermined application license as resolved.
+- **Owner GPL-3.0-only license decision: APPROVED and applied.** Verify the owner's authority over all original contributions and preserve GPL source-distribution obligations before each binary distribution.
 - Preserve and distribute all applicable notices and full license texts with the release package/source offer, and review other transitive components that are not listed here.
-- Confirm how the chosen application license and distribution channel will meet the corresponding-source obligations before publishing a stable APK.
+- Supply complete corresponding source, reproducible build instructions and every required third-party notice with any published combined APK. Confirm delivery obligations and review any compatibility uncertainties prior to distribution.
 - Verify a persistent production signing certificate, physical device behavior and user-facing documentation independently of this dependency audit.
 
 This document records project engineering checks and does not substitute for legal review.

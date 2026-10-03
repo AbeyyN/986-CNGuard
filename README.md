@@ -77,4 +77,6 @@ See [WORKFLOW.md](WORKFLOW.md), [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), [d
 
 ## License
 
-Release licensing is GPL-compatible because the current Wireless ADB pairing transport includes a GPL-3.0 SPAKE2 dependency. A full license and third-party notice set will be included before the first tagged release.
+The project's original source is distributed under **GNU GPL version 3 only (SPDX: GPL-3.0-only)**, with the repository owner's approval. See [LICENSE](LICENSE). Third-party libraries retain their own licenses and attributions; consult [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). Completing a dependency-notice audit and passing physical-device verification remain prerequisites to distributing a stable APK.
+
+The published [production signing certificate](release/signing-certificate.pem) contains **only the public certificate**, never the private signing key. Its SHA-256 fingerprint is `A693C068E91E410424DE88FD5BA42C60A04E13A4EDD4D271E17E694B1E195CDE`. No signed stable APK is yet published.

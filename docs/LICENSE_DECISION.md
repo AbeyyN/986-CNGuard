@@ -1,20 +1,16 @@
-# Application-license decision (owner approval required)
+# Owner-approved application license
 
-**Status:** NEED DECISION. This document is not a license grant, and CN Guard does not currently have an owner-approved project-wide LICENSE file.
+**Status: APPROVED — GPL-3.0-only.** On 4 October 2026 (Asia/Kuala_Lumpur), the repository owner explicitly approved GNU GPL version 3 for CN Guard and approved provisioning a dedicated production signing identity outside GitHub.
 
-The current application bundles Kadb's Android pairing path, which resolves `spake2-java:1.1.1` under GPL-3.0. The Free Software Foundation's [GPL FAQ](https://www.gnu.org/licenses/gpl-faq.en.html#IfLibraryIsGPL) explains that distributing a combined application which links to a GPL library imposes GPL terms on the combination. The copyright holder's approval is necessary before assigning a project license or distributing a combined APK.
+The [repository-root LICENSE](../LICENSE) supplies the complete GPLv3 license text; this project selects **GPL-3.0-only** rather than GPL-3.0-or-later. Original project contributions are distributed under that license to the extent the owner and each contributor have the necessary rights. This does not override separate upstream copyright notices or relicense third-party components.
 
-## Option A — retain the tested Kadb pairing path and approve GPLv3
+The existing Kadb Android pairing integration resolves `spake2-java` under GPL-3.0, and is retained rather than silently replaced. See [third-party review](../THIRD_PARTY_NOTICES.md) for the resolved dependency graph and identified component licenses.
 
-- Retain build-verified pairing integration and current feature set.
-- Project copyright holder explicitly approves using GPLv3 for the project and identifies all actual contributors/rightsholders before a project LICENSE is adopted.
-- Finish full resolved-transitive licensing/attribution audit; ensure that releases provide appropriate corresponding source, build instructions and notices.
-- Keep actual China-ROM physical validation and production signing separate from the licensing decision.
+## Remaining compliance gates
 
-## Option B — require a permissive application license
+- Confirm ownership or contributor permission for all original work and whether any third-party file requires separate treatment.
+- Complete the *final* release runtime transitive license/attribution audit, preserve every applicable notice and supply complete corresponding source/build instructions with a distributed combined APK.
+- Keep private keystore/passwords/recovery material exclusively on trusted private storage; the repository includes only a public certificate.
+- Finish physical China-ROM verification and source-backed support claims before stable release.
 
-- Do **not** relicense GPLv3 SPAKE2 simply by changing a wrapper or omitting the notice.
-- Treat replacement of the GPL-dependent pairing implementation as a new security-sensitive engineering project. Select a truly compatible independently licensed pairing implementation, inspect every transitive dependency, and validate its protocol/security behavior with independent tests and physical devices before replacing Kadb.
-- Until a replacement passes, the pairing-enabled APK remains blocked from permissive distribution. A separate diagnostic-only variant may be designed without bundling the GPL-dependent code, but it must not falsely claim Local Bridge pairing is available.
-
-**No selection is recorded in this document.** Release publication is blocked pending the owner's explicit choice and a final legal/compliance review.
+This approval resolves **which license the owner selected**. It does **not** by itself satisfy every redistribution or physical testing obligation.
