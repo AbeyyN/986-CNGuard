@@ -12,6 +12,12 @@ captures/
 *.jks
 *.keystore
 keystore.properties
+*.p12
+*.pfx
+*.gpg
+*.key
+release-storepass.txt
+recovery-passphrase.txt
 
 # OS / editor noise
 .DS_Store

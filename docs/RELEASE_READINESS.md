@@ -7,8 +7,8 @@ A successful CI build is necessary but not sufficient for stable-release status.
 | Debug unit tests, build and lint | Automated | Green Android CI on the exact release candidate commit |
 | Unsigned release build and release lint | Automated | Green Release Readiness workflow |
 | Runtime dependency inventory | Automated | Attach the resolved release dependency graph and audit licenses |
-| App license and third-party compliance | BLOCKED | Owner-approved license and complete binary/source notices |
-| Production signing continuity | BLOCKED | Persistent signing certificate held outside GitHub; signed-release checksum |
+| App license and third-party compliance | PARTIAL | GPL-3.0-only owner approval recorded; full resolved dependency/notice and corresponding-source audit still pending |
+| Production signing continuity | PARTIAL | Private identity provisioned; public certificate pinned; encrypted backup restore verified; offline recovery copy and production-signed candidate check pending |
 | Local Bridge pairing on physical Xiaomi CN ROM | UNVERIFIED | Recorded device/ROM/build pairing and reconnect session |
 | Device-local alert presentation | UNVERIFIED | Manual screen-on/off and lock-screen test |
 | Greezer and FCM socket read-only probes on target ROM | UNVERIFIED | Physical probe evidence; inaccessible states reported UNKNOWN |
