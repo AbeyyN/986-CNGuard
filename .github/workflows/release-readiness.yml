@@ -33,7 +33,7 @@ jobs:
         run: |
           "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-37.2" "build-tools;37.0.0"
 
-      - name: Test, assemble unsigned release, and lint
+      - name: Validate offline signing helper syntax\n        run: bash -n scripts/sign-release-local.sh\n\n      - name: Test, assemble unsigned release, and lint
         run: gradle --no-daemon :app:testDebugUnitTest :app:assembleRelease :app:lintRelease
 
       - name: Record dependency graph and unsigned APK checksum
