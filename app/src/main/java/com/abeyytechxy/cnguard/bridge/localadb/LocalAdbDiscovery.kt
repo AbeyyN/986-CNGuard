@@ -235,18 +235,22 @@ class LocalAdbDiscovery(context: Context) {
             return
         }
 
-        multicastLock = wifiManager
-            .createMulticastLock("986CNGuard:LocalAdbDiscovery")
-            .apply {
+        runCatching {
+            wifiManager.createMulticastLock("986CNGuard:LocalAdbDiscovery").apply {
                 setReferenceCounted(false)
                 acquire()
             }
+        }.onSuccess {
+            multicastLock = it
+        }.onFailure {
+            lastError = "Wi-Fi multicast discovery unavailable"
+        }
     }
 
     private fun releaseMulticastLock() {
         multicastLock?.let { lock ->
-            if (lock.isHeld) {
-                lock.release()
+            runCatching {
+                if (lock.isHeld) lock.release()
             }
         }
         multicastLock = null
