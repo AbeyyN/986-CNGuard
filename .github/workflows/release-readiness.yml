@@ -43,6 +43,12 @@ jobs:
           bash -n scripts/test-field-preflight-ci.sh
           bash scripts/test-field-preflight-ci.sh
 
+      - name: Exercise private evidence-gate logic with synthetic data
+        shell: bash
+        run: |
+          python3 -m unittest discover -s scripts/tests -p 'test_release_evidence.py' -v
+          python3 scripts/check_release_evidence.py --help
+
       - name: Test, assemble unsigned release, and lint
         run: gradle --no-daemon :app:testDebugUnitTest :app:assembleRelease :app:lintRelease
 

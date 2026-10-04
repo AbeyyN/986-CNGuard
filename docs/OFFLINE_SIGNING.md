@@ -1,12 +1,12 @@
 # Offline release signing
 
-This is a guarded helper for 986 or another trusted offline build host. It is **not** a key-generation system and does not upload or publish artifacts to GitHub. The current project has no provisioned production signing identity; do not call a debug APK a stable release.
+This is a guarded helper for 986 or another trusted offline build host. It is **not** a key-generation system and does not upload or publish artifacts to GitHub. The project has a private, previously provisioned production signing identity and a tested encrypted on-server backup. Off-host recovery-secret custody and exact latest-candidate signing must still be verified. Do not call a debug APK or an unsigned candidate stable. See [owner signing and offline recovery](OWNER_SIGNING_AND_OFFHOST_RECOVERY.md).
 
 Before use:
 
 1. Finalize the application license and third-party distribution obligations.
 2. Build and validate the release candidate from an exact reviewed Git commit. The CI release-readiness job verifies an **unsigned** release build and supplies its checksum/dependency graph; it does not distribute a signed APK.
-3. Provision a persistent, backed-up release keystore **outside the public repository** by an owner-approved process. The key and all passwords remain on the trusted host.
+3. Use the owner-approved existing production keystore **outside the public repository**. Never silently regenerate or replace it. The key and passwords remain under private owner control.
 4. Record and independently review the public SHA-256 signing certificate fingerprint. Pin that value in the protected signing environment so future releases cannot accidentally use a different certificate.
 5. Set the following variables through a protected environment, without putting passwords in the command line or GitHub Actions:
 
