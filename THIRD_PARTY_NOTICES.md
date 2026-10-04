@@ -15,6 +15,7 @@ This is a preliminary dependency notice and audit ledger for 986 CN Guard. It is
 | [Okio](https://github.com/square/okio) via Kadb | I/O | Apache License 2.0 | Validate resolved graph |
 | [AndroidX DocumentFile](https://developer.android.com/jetpack/androidx/releases/documentfile) via Kadb | Android storage integration | Apache License 2.0 | Validate resolved graph |
 | [LSPosed AndroidHiddenApiBypass](https://github.com/LSPosed/AndroidHiddenApiBypass) via Kadb | Kadb Android runtime | Apache License 2.0 | Review actual usage and compatibility |
+| [Guava ListenableFuture](https://github.com/google/guava) 1.0 via AndroidX | Small interface-only dependency | Apache License 2.0, inherited from guava-parent 26.0-android and explicitly stated in source copyright header | Preserve Apache attribution and exact source; reviewed in source audit |
 
 Bouncy Castle source states that its license is read in the same way as MIT; its attribution and license text must accompany any binary distribution.
 
