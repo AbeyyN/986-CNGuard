@@ -12,6 +12,12 @@ Every pull request that changes application code must pass:
 
 Release candidates add release-variant build and signing verification.
 
+## CN-ROM simulation harness
+
+Before physical-device testing, run the fixture-driven harness documented in [CN-ROM simulation harness](CN_ROM_SIMULATION.md). It exercises production classifiers and parsers across healthy, restricted and inaccessible-evidence scenarios.
+
+Simulation results are regression evidence only. They must never create a Verified support-matrix entry or establish ROM region.
+
 ## Physical-device record
 
 A physical verification record should include:
