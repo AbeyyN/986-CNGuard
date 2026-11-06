@@ -91,3 +91,10 @@ Remote rules must never provide arbitrary shell execution.
 Do not collect notification contents, banking data, credentials, IMEI, Android ID, phone numbers, or account identifiers for diagnostics.
 
 Diagnostic uploads, if introduced, must be opt-in and minimize device-identifying data.
+
+
+<!-- R052_PRIVATE_COMMAND_AUTHORITY_20261106 -->
+## Private infrastructure command boundary
+- Commands against the owner's private hosts are governed by an independently authorized private execution plane and require prior, exact, one-use owner approval for each execution, including read-only. This public repository does not grant SSH, local terminal, root, secrets or production deployment authority.
+- Do not publish private host identities, credentials, keys, internal execution receipts or handoff records here. Preserve existing project-specific verification and self-hosted isolated CI requirements. A documentation update is not proof of a live executor.
+<!-- /R052_PRIVATE_COMMAND_AUTHORITY_20261106 -->
